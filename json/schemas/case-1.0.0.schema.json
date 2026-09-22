@@ -1,0 +1,206 @@
+{
+  "type": "object",
+  "properties": {
+    "format_version": {
+      "const": "1.0.0"
+    },
+    "id": {
+      "type": "string"
+    },
+    "definition": {
+      "type": "string"
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "calls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "function": {
+            "type": "string"
+          },
+          "args": {
+            "type": "array",
+            "items": {}
+          },
+          "result": {},
+          "error": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "code": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "category",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "function",
+          "args"
+        ],
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "required": [
+              "result"
+            ],
+            "not": {
+              "required": [
+                "error"
+              ]
+            }
+          },
+          {
+            "required": [
+              "error"
+            ],
+            "not": {
+              "required": [
+                "result"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string"
+          },
+          "environment": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "clear_cache": {
+            "type": "boolean"
+          },
+          "expected": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "value": {},
+                  "warnings": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "category": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "category",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "value",
+                  "warnings"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "error": {
+                    "type": "object",
+                    "properties": {
+                      "category": {
+                        "type": "string"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "category",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "warnings": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "category": {
+                          "type": "string"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "category",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "error",
+                  "warnings"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "required": [
+          "method",
+          "expected"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "oracle": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "format_version",
+    "id",
+    "definition",
+    "environment",
+    "calls",
+    "steps"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:variant-provider:schema:case:1.0.0"
+}

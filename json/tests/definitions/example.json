@@ -1,0 +1,75 @@
+{
+  "$schema": "urn:variant-provider:schema:definition:1.0.0",
+  "format_version": "1.0.0",
+  "data_version": 1,
+  "provider": {
+    "id": "example",
+    "namespace": "example",
+    "is_build_plugin": false
+  },
+  "constants": {
+    "values": [
+      "fast",
+      "portable"
+    ]
+  },
+  "libraries": {},
+  "functions": {},
+  "queries": {
+    "all": {
+      "cache": true,
+      "expr": {
+        "op": "const",
+        "name": "values"
+      }
+    },
+    "supported": {
+      "cache": true,
+      "expr": {
+        "op": "if",
+        "condition": {
+          "op": "env",
+          "name": "EXAMPLE_FAST",
+          "default": null
+        },
+        "then": {
+          "op": "const",
+          "name": "values"
+        },
+        "else": {
+          "op": "literal",
+          "value": [
+            "portable"
+          ]
+        }
+      }
+    },
+    "all_configs": {
+      "cache": true,
+      "expr": {
+        "op": "configs",
+        "mode": "all"
+      }
+    },
+    "supported_configs": {
+      "cache": true,
+      "expr": {
+        "op": "configs",
+        "mode": "supported"
+      }
+    }
+  },
+  "features": [
+    {
+      "name": "mode",
+      "multi_value": false,
+      "all": "all",
+      "supported": "supported"
+    }
+  ],
+  "exports": {
+    "get_all_configs": "all_configs",
+    "get_supported_configs": "supported_configs"
+  },
+  "diagnostics": {}
+}

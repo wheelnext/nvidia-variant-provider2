@@ -1,0 +1,69 @@
+---
+name: Provider conformance
+"on": [push, pull_request, workflow_dispatch]
+
+jobs:
+  lint:
+    name: Prek
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: '3.14'
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Install workspace dependencies
+        run: uv sync --frozen
+      - name: Run prek
+        run: uv run --frozen prek run -a
+
+  test:
+    name: ${{ matrix.language }} / ${{ matrix.os }}
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        language: [python, rust]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: '3.14'
+      - uses: dtolnay/rust-toolchain@stable
+        if: matrix.language == 'rust'
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - name: Install workspace dependencies
+        run: uv sync --frozen
+      - name: Python tests
+        if: matrix.language == 'python'
+        run: uv run --frozen pytest
+      - name: Rust tests
+        if: matrix.language == 'rust'
+        run: cargo test --locked --manifest-path rust/Cargo.toml
+      - name: Cross-language JSON conformance
+        if: matrix.language == 'rust'
+        run: uv run --frozen python tools/check_corpus.py
+
+  packages:
+    name: Packages
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: '3.14'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install workspace dependencies
+        run: uv sync --frozen
+      - name: Build Python packages
+        run: uv run --frozen python tools/package.py
+      - name: Verify Python packages
+        run: uv run --frozen python tools/check_packages.py
+      - name: Package and verify Rust crate
+        run: cargo package --locked --manifest-path rust/Cargo.toml

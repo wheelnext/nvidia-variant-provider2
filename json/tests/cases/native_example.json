@@ -1,0 +1,51 @@
+{
+  "format_version": "1.0.0",
+  "id": "native_example",
+  "definition": "tests/definitions/native-example.json",
+  "environment": {},
+  "calls": [
+    {
+      "function": "open",
+      "args": [],
+      "result": {
+        "handle": {
+          "$handle": "1"
+        }
+      }
+    },
+    {
+      "function": "read",
+      "args": [
+        {
+          "$handle": "1"
+        },
+        5000000000
+      ],
+      "result": {
+        "value": 5000000007
+      }
+    },
+    {
+      "function": "close",
+      "args": [],
+      "result": {}
+    }
+  ],
+  "steps": [
+    {
+      "method": "get_supported_configs",
+      "expected": {
+        "value": [
+          {
+            "name": "capability_tier",
+            "values": [
+              "tier_5000000007"
+            ],
+            "multi_value": false
+          }
+        ],
+        "warnings": []
+      }
+    }
+  ]
+}

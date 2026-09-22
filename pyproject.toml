@@ -1,0 +1,28 @@
+[project]
+name = "variant-provider-workspace"
+version = "0.1.0"
+requires-python = ">=3.10"
+description = "Development workspace for the declarative variant provider engines"
+
+[dependency-groups]
+dev = [
+    "build>=1.2",
+    "nvidia-variant-provider",
+    "prek>=0.3",
+    "pytest>=8",
+    "ruff>=0.14",
+    "variant-provider",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["python", "python/compat"]
+
+[tool.uv.sources]
+variant-provider = { workspace = true }
+nvidia-variant-provider = { workspace = true }
+
+[tool.pytest.ini_options]
+testpaths = ["python/tests"]

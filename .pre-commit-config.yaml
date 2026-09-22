@@ -1,0 +1,60 @@
+---
+# Run with the workspace's locked tools: uv run prek run --all-files
+default_language_version:
+  python: python3.14
+
+# ========================================================================= #
+#                                 FORMATING                                 #
+# ========================================================================= #
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-json
+      - id: check-toml
+      - id: check-xml
+      - id: check-yaml
+      - id: debug-statements
+      - id: check-builtin-literals
+      - id: check-case-conflict
+      - id: check-docstring-first
+      - id: detect-private-key
+
+  # Markdown formatting
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.9.5
+    hooks:
+      - id: prettier
+        name: prettier markdown
+        types_or: [markdown]
+        args: [--prose-wrap=always]
+
+  # -------------------------
+  # CI formatting
+  # -------------------------
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.38.0
+    hooks:
+      - id: yamllint
+
+  - repo: https://github.com/shenxianpeng/hadolint-pre-commit
+    # This wrapper bundles Hadolint 2.15.1 in prek's isolated environment.
+    rev: v2.15.1.1
+    hooks:
+      - id: hadolint
+
+  # -------------------------
+  # Script formatting
+  # -------------------------
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
+    hooks:
+      - id: shellcheck

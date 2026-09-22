@@ -1,0 +1,1584 @@
+{
+  "$schema": "urn:variant-provider:schema:definition:1.0.0",
+  "format_version": "1.0.0",
+  "data_version": 1,
+  "provider": {
+    "id": "nvidia",
+    "namespace": "nvidia",
+    "is_build_plugin": false
+  },
+  "constants": {
+    "umd_min_major": 11,
+    "umd_max_major": 15,
+    "umd_max_minor": 20,
+    "sm_min_major": 5,
+    "sm_max_major": 12,
+    "sm_max_minor": 9
+  },
+  "libraries": {
+    "management": {
+      "platforms": {
+        "windows": [
+          {
+            "env": "WINDIR",
+            "default": "C:/Windows",
+            "suffix": "System32/nvml.dll"
+          },
+          {
+            "env": "ProgramFiles",
+            "default": "C:/Program Files",
+            "suffix": "NVIDIA Corporation/NVSMI/nvml.dll"
+          }
+        ],
+        "default": [
+          {
+            "path": "libnvidia-ml.so.1"
+          }
+        ]
+      }
+    }
+  },
+  "functions": {
+    "init": {
+      "library": "management",
+      "symbol": "nvmlInitWithFlags",
+      "abi": "C",
+      "args": [
+        {
+          "name": "flags",
+          "type": "u32",
+          "direction": "in"
+        }
+      ],
+      "returns": "u32",
+      "success": [
+        0
+      ]
+    },
+    "shutdown": {
+      "library": "management",
+      "symbol": "nvmlShutdown",
+      "abi": "C",
+      "args": [],
+      "returns": "u32",
+      "success": [
+        0
+      ],
+      "invalidates_handles": true
+    },
+    "system_version": {
+      "library": "management",
+      "symbol": "nvmlSystemGetDriverVersion",
+      "abi": "C",
+      "args": [
+        {
+          "name": "value",
+          "type": "buffer",
+          "direction": "out",
+          "size": 80
+        },
+        {
+          "name": "size",
+          "type": "u32",
+          "direction": "in"
+        }
+      ],
+      "returns": "u32",
+      "success": [
+        0
+      ]
+    },
+    "driver_v2": {
+      "library": "management",
+      "symbol": "nvmlSystemGetCudaDriverVersion_v2",
+      "abi": "C",
+      "args": [
+        {
+          "name": "value",
+          "type": "i32",
+          "direction": "out"
+        }
+      ],
+      "returns": "u32",
+      "success": [
+        0
+      ]
+    },
+    "driver_v1": {
+      "library": "management",
+      "symbol": "nvmlSystemGetCudaDriverVersion",
+      "abi": "C",
+      "args": [
+        {
+          "name": "value",
+          "type": "i32",
+          "direction": "out"
+        }
+      ],
+      "returns": "u32",
+      "success": [
+        0
+      ]
+    },
+    "count": {
+      "library": "management",
+      "symbol": "nvmlDeviceGetCount_v2",
+      "abi": "C",
+      "args": [
+        {
+          "name": "value",
+          "type": "u32",
+          "direction": "out"
+        }
+      ],
+      "returns": "u32",
+      "success": [
+        0
+      ]
+    },
+    "handle": {
+      "library": "management",
+      "symbol": "nvmlDeviceGetHandleByIndex_v2",
+      "abi": "C",
+      "args": [
+        {
+          "name": "index",
+          "type": "u32",
+          "direction": "in"
+        },
+        {
+          "name": "value",
+          "type": "handle",
+          "direction": "out"
+        }
+      ],
+      "returns": "u32",
+      "success": [
+        0
+      ]
+    },
+    "capability": {
+      "library": "management",
+      "symbol": "nvmlDeviceGetCudaComputeCapability",
+      "abi": "C",
+      "args": [
+        {
+          "name": "handle",
+          "type": "handle",
+          "direction": "in"
+        },
+        {
+          "name": "major",
+          "type": "i32",
+          "direction": "out"
+        },
+        {
+          "name": "minor",
+          "type": "i32",
+          "direction": "out"
+        }
+      ],
+      "returns": "u32",
+      "success": [
+        0
+      ]
+    }
+  },
+  "queries": {
+    "environment": {
+      "cache": true,
+      "expr": {
+        "op": "finally",
+        "body": {
+          "op": "try",
+          "body": {
+            "op": "seq",
+            "items": [
+              {
+                "op": "call",
+                "function": "init",
+                "args": [
+                  {
+                    "op": "literal",
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "op": "let",
+                "bindings": [
+                  {
+                    "name": "system",
+                    "value": {
+                      "op": "get",
+                      "value": {
+                        "op": "call",
+                        "function": "system_version",
+                        "args": [
+                          {
+                            "op": "literal",
+                            "value": 80
+                          }
+                        ]
+                      },
+                      "key": "value"
+                    }
+                  },
+                  {
+                    "name": "driver",
+                    "value": {
+                      "op": "try",
+                      "body": {
+                        "op": "get",
+                        "value": {
+                          "op": "call",
+                          "function": "driver_v2",
+                          "args": []
+                        },
+                        "key": "value"
+                      },
+                      "catch": [
+                        "NativeError"
+                      ],
+                      "fallback": {
+                        "op": "try",
+                        "body": {
+                          "op": "get",
+                          "value": {
+                            "op": "call",
+                            "function": "driver_v1",
+                            "args": []
+                          },
+                          "key": "value"
+                        },
+                        "catch": [
+                          "NativeError"
+                        ],
+                        "fallback": {
+                          "op": "literal",
+                          "value": null
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "name": "count",
+                    "value": {
+                      "op": "get",
+                      "value": {
+                        "op": "call",
+                        "function": "count",
+                        "args": []
+                      },
+                      "key": "value"
+                    }
+                  },
+                  {
+                    "name": "architectures",
+                    "value": {
+                      "op": "map",
+                      "items": {
+                        "op": "range",
+                        "start": {
+                          "op": "literal",
+                          "value": 0
+                        },
+                        "stop": {
+                          "op": "ref",
+                          "name": "count"
+                        },
+                        "step": {
+                          "op": "literal",
+                          "value": 1
+                        }
+                      },
+                      "var": "device",
+                      "body": {
+                        "op": "let",
+                        "bindings": [
+                          {
+                            "name": "handle",
+                            "value": {
+                              "op": "get",
+                              "value": {
+                                "op": "call",
+                                "function": "handle",
+                                "args": [
+                                  {
+                                    "op": "ref",
+                                    "name": "device"
+                                  }
+                                ]
+                              },
+                              "key": "value"
+                            }
+                          }
+                        ],
+                        "body": {
+                          "op": "try",
+                          "body": {
+                            "op": "let",
+                            "bindings": [
+                              {
+                                "name": "cap",
+                                "value": {
+                                  "op": "call",
+                                  "function": "capability",
+                                  "args": [
+                                    {
+                                      "op": "ref",
+                                      "name": "handle"
+                                    }
+                                  ]
+                                }
+                              }
+                            ],
+                            "body": {
+                              "op": "list",
+                              "items": [
+                                {
+                                  "op": "get",
+                                  "value": {
+                                    "op": "ref",
+                                    "name": "cap"
+                                  },
+                                  "key": "major"
+                                },
+                                {
+                                  "op": "get",
+                                  "value": {
+                                    "op": "ref",
+                                    "name": "cap"
+                                  },
+                                  "key": "minor"
+                                }
+                              ]
+                            }
+                          },
+                          "catch": [
+                            "NativeError"
+                          ],
+                          "fallback": {
+                            "op": "literal",
+                            "value": null
+                          }
+                        }
+                      }
+                    }
+                  }
+                ],
+                "body": {
+                  "op": "record",
+                  "fields": {
+                    "system_driver_versions": {
+                      "op": "ref",
+                      "name": "system"
+                    },
+                    "cuda_driver_version": {
+                      "op": "if",
+                      "condition": {
+                        "op": "is_null",
+                        "value": {
+                          "op": "ref",
+                          "name": "driver"
+                        }
+                      },
+                      "then": {
+                        "op": "literal",
+                        "value": null
+                      },
+                      "else": {
+                        "op": "format",
+                        "template": "{major}.{minor}",
+                        "args": {
+                          "major": {
+                            "op": "binary",
+                            "kind": "floor_div",
+                            "left": {
+                              "op": "ref",
+                              "name": "driver"
+                            },
+                            "right": {
+                              "op": "literal",
+                              "value": 1000
+                            }
+                          },
+                          "minor": {
+                            "op": "binary",
+                            "kind": "floor_div",
+                            "left": {
+                              "op": "binary",
+                              "kind": "mod",
+                              "left": {
+                                "op": "ref",
+                                "name": "driver"
+                              },
+                              "right": {
+                                "op": "literal",
+                                "value": 1000
+                              }
+                            },
+                            "right": {
+                              "op": "literal",
+                              "value": 10
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "architectures": {
+                      "op": "unique",
+                      "value": {
+                        "op": "filter",
+                        "items": {
+                          "op": "ref",
+                          "name": "architectures"
+                        },
+                        "var": "arch",
+                        "body": {
+                          "op": "not",
+                          "value": {
+                            "op": "is_null",
+                            "value": {
+                              "op": "ref",
+                              "name": "arch"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          "catch": [
+            "NativeError"
+          ],
+          "fallback": {
+            "op": "literal",
+            "value": null
+          }
+        },
+        "cleanup": {
+          "op": "try",
+          "body": {
+            "op": "call",
+            "function": "shutdown",
+            "args": []
+          },
+          "catch": [
+            "NativeError"
+          ],
+          "fallback": {
+            "op": "literal",
+            "value": null
+          }
+        }
+      }
+    },
+    "umd_version": {
+      "cache": true,
+      "expr": {
+        "op": "let",
+        "bindings": [
+          {
+            "name": "forced",
+            "value": {
+              "op": "env",
+              "name": "NV_VARIANT_PROVIDER_FORCE_CUDA_DRIVER_VERSION",
+              "default": null
+            }
+          }
+        ],
+        "body": {
+          "op": "if",
+          "condition": {
+            "op": "ref",
+            "name": "forced"
+          },
+          "then": {
+            "op": "parse_version",
+            "value": {
+              "op": "ref",
+              "name": "forced"
+            }
+          },
+          "else": {
+            "op": "let",
+            "bindings": [
+              {
+                "name": "environment",
+                "value": {
+                  "op": "query",
+                  "name": "environment"
+                }
+              }
+            ],
+            "body": {
+              "op": "if",
+              "condition": {
+                "op": "is_null",
+                "value": {
+                  "op": "ref",
+                  "name": "environment"
+                }
+              },
+              "then": {
+                "op": "literal",
+                "value": null
+              },
+              "else": {
+                "op": "let",
+                "bindings": [
+                  {
+                    "name": "raw",
+                    "value": {
+                      "op": "get",
+                      "value": {
+                        "op": "ref",
+                        "name": "environment"
+                      },
+                      "key": "cuda_driver_version"
+                    }
+                  }
+                ],
+                "body": {
+                  "op": "if",
+                  "condition": {
+                    "op": "not",
+                    "value": {
+                      "op": "ref",
+                      "name": "raw"
+                    }
+                  },
+                  "then": {
+                    "op": "seq",
+                    "items": [
+                      {
+                        "op": "warn",
+                        "diagnostic": "missing_umd",
+                        "args": {}
+                      },
+                      {
+                        "op": "literal",
+                        "value": null
+                      }
+                    ]
+                  },
+                  "else": {
+                    "op": "let",
+                    "bindings": [
+                      {
+                        "name": "version",
+                        "value": {
+                          "op": "parse_version",
+                          "value": {
+                            "op": "ref",
+                            "name": "raw"
+                          }
+                        }
+                      },
+                      {
+                        "name": "minimum",
+                        "value": {
+                          "op": "parse_version",
+                          "value": {
+                            "op": "format",
+                            "template": "{major}.0",
+                            "args": {
+                              "major": {
+                                "op": "const",
+                                "name": "umd_min_major"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "name": "maximum",
+                        "value": {
+                          "op": "parse_version",
+                          "value": {
+                            "op": "format",
+                            "template": "{major}.{minor}",
+                            "args": {
+                              "major": {
+                                "op": "const",
+                                "name": "umd_max_major"
+                              },
+                              "minor": {
+                                "op": "const",
+                                "name": "umd_max_minor"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ],
+                    "body": {
+                      "op": "if",
+                      "condition": {
+                        "op": "if",
+                        "condition": {
+                          "op": "binary",
+                          "kind": "lt",
+                          "left": {
+                            "op": "ref",
+                            "name": "version"
+                          },
+                          "right": {
+                            "op": "ref",
+                            "name": "minimum"
+                          }
+                        },
+                        "then": {
+                          "op": "literal",
+                          "value": true
+                        },
+                        "else": {
+                          "op": "binary",
+                          "kind": "gt",
+                          "left": {
+                            "op": "ref",
+                            "name": "version"
+                          },
+                          "right": {
+                            "op": "ref",
+                            "name": "maximum"
+                          }
+                        }
+                      },
+                      "then": {
+                        "op": "seq",
+                        "items": [
+                          {
+                            "op": "warn",
+                            "diagnostic": "outside_umd",
+                            "args": {
+                              "version": {
+                                "op": "ref",
+                                "name": "version"
+                              },
+                              "minimum": {
+                                "op": "ref",
+                                "name": "minimum"
+                              },
+                              "maximum": {
+                                "op": "ref",
+                                "name": "maximum"
+                              }
+                            }
+                          },
+                          {
+                            "op": "literal",
+                            "value": null
+                          }
+                        ]
+                      },
+                      "else": {
+                        "op": "ref",
+                        "name": "version"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "sm_architectures": {
+      "cache": true,
+      "expr": {
+        "op": "let",
+        "bindings": [
+          {
+            "name": "forced",
+            "value": {
+              "op": "env",
+              "name": "NV_VARIANT_PROVIDER_FORCE_SM_ARCH",
+              "default": null
+            }
+          }
+        ],
+        "body": {
+          "op": "if",
+          "condition": {
+            "op": "ref",
+            "name": "forced"
+          },
+          "then": {
+            "op": "map",
+            "items": {
+              "op": "split",
+              "value": {
+                "op": "ref",
+                "name": "forced"
+              },
+              "separator": ".",
+              "maxsplit": 1
+            },
+            "var": "piece",
+            "body": {
+              "op": "parse_int",
+              "value": {
+                "op": "ref",
+                "name": "piece"
+              }
+            }
+          },
+          "else": {
+            "op": "let",
+            "bindings": [
+              {
+                "name": "environment",
+                "value": {
+                  "op": "query",
+                  "name": "environment"
+                }
+              }
+            ],
+            "body": {
+              "op": "if",
+              "condition": {
+                "op": "is_null",
+                "value": {
+                  "op": "ref",
+                  "name": "environment"
+                }
+              },
+              "then": {
+                "op": "literal",
+                "value": null
+              },
+              "else": {
+                "op": "index",
+                "value": {
+                  "op": "sort",
+                  "value": {
+                    "op": "get",
+                    "value": {
+                      "op": "ref",
+                      "name": "environment"
+                    },
+                    "key": "architectures"
+                  },
+                  "reverse": true
+                },
+                "index": {
+                  "op": "literal",
+                  "value": 0
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "all_umd": {
+      "cache": true,
+      "expr": {
+        "op": "flatten",
+        "value": {
+          "op": "map",
+          "items": {
+            "op": "range",
+            "start": {
+              "op": "const",
+              "name": "umd_max_major"
+            },
+            "stop": {
+              "op": "binary",
+              "kind": "sub",
+              "left": {
+                "op": "const",
+                "name": "umd_min_major"
+              },
+              "right": {
+                "op": "literal",
+                "value": 1
+              }
+            },
+            "step": {
+              "op": "literal",
+              "value": -1
+            }
+          },
+          "var": "major",
+          "body": {
+            "op": "map",
+            "items": {
+              "op": "concat",
+              "items": [
+                {
+                  "op": "range",
+                  "start": {
+                    "op": "const",
+                    "name": "umd_max_minor"
+                  },
+                  "stop": {
+                    "op": "literal",
+                    "value": -1
+                  },
+                  "step": {
+                    "op": "literal",
+                    "value": -1
+                  }
+                },
+                {
+                  "op": "list",
+                  "items": [
+                    {
+                      "op": "literal",
+                      "value": null
+                    }
+                  ]
+                }
+              ]
+            },
+            "var": "minor",
+            "body": {
+              "op": "if",
+              "condition": {
+                "op": "is_null",
+                "value": {
+                  "op": "ref",
+                  "name": "minor"
+                }
+              },
+              "then": {
+                "op": "format",
+                "template": "{major}",
+                "args": {
+                  "major": {
+                    "op": "ref",
+                    "name": "major"
+                  }
+                }
+              },
+              "else": {
+                "op": "format",
+                "template": "{major}.{minor}",
+                "args": {
+                  "major": {
+                    "op": "ref",
+                    "name": "major"
+                  },
+                  "minor": {
+                    "op": "ref",
+                    "name": "minor"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "all_sm": {
+      "cache": true,
+      "expr": {
+        "op": "flatten",
+        "value": {
+          "op": "map",
+          "items": {
+            "op": "literal",
+            "value": [
+              "real",
+              "virtual"
+            ]
+          },
+          "var": "suffix",
+          "body": {
+            "op": "flatten",
+            "value": {
+              "op": "map",
+              "items": {
+                "op": "range",
+                "start": {
+                  "op": "const",
+                  "name": "sm_max_major"
+                },
+                "stop": {
+                  "op": "binary",
+                  "kind": "sub",
+                  "left": {
+                    "op": "const",
+                    "name": "sm_min_major"
+                  },
+                  "right": {
+                    "op": "literal",
+                    "value": 1
+                  }
+                },
+                "step": {
+                  "op": "literal",
+                  "value": -1
+                }
+              },
+              "var": "major",
+              "body": {
+                "op": "map",
+                "items": {
+                  "op": "range",
+                  "start": {
+                    "op": "const",
+                    "name": "sm_max_minor"
+                  },
+                  "stop": {
+                    "op": "literal",
+                    "value": -1
+                  },
+                  "step": {
+                    "op": "literal",
+                    "value": -1
+                  }
+                },
+                "var": "minor",
+                "body": {
+                  "op": "format",
+                  "template": "{major}{minor}_{suffix}",
+                  "args": {
+                    "major": {
+                      "op": "ref",
+                      "name": "major"
+                    },
+                    "minor": {
+                      "op": "ref",
+                      "name": "minor"
+                    },
+                    "suffix": {
+                      "op": "ref",
+                      "name": "suffix"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "lower": {
+      "cache": false,
+      "expr": {
+        "op": "let",
+        "bindings": [
+          {
+            "name": "version",
+            "value": {
+              "op": "query",
+              "name": "umd_version"
+            }
+          }
+        ],
+        "body": {
+          "op": "if",
+          "condition": {
+            "op": "is_null",
+            "value": {
+              "op": "ref",
+              "name": "version"
+            }
+          },
+          "then": {
+            "op": "literal",
+            "value": []
+          },
+          "else": {
+            "op": "let",
+            "bindings": [
+              {
+                "name": "vmajor",
+                "value": {
+                  "op": "version_part",
+                  "value": {
+                    "op": "ref",
+                    "name": "version"
+                  },
+                  "part": "major"
+                }
+              },
+              {
+                "name": "vminor",
+                "value": {
+                  "op": "version_part",
+                  "value": {
+                    "op": "ref",
+                    "name": "version"
+                  },
+                  "part": "minor"
+                }
+              }
+            ],
+            "body": {
+              "op": "flatten",
+              "value": {
+                "op": "map",
+                "items": {
+                  "op": "range",
+                  "start": {
+                    "op": "ref",
+                    "name": "vmajor"
+                  },
+                  "stop": {
+                    "op": "binary",
+                    "kind": "sub",
+                    "left": {
+                      "op": "const",
+                      "name": "umd_min_major"
+                    },
+                    "right": {
+                      "op": "literal",
+                      "value": 1
+                    }
+                  },
+                  "step": {
+                    "op": "literal",
+                    "value": -1
+                  }
+                },
+                "var": "major",
+                "body": {
+                  "op": "map",
+                  "items": {
+                    "op": "concat",
+                    "items": [
+                      {
+                        "op": "if",
+                        "condition": {
+                          "op": "binary",
+                          "kind": "lt",
+                          "left": {
+                            "op": "ref",
+                            "name": "major"
+                          },
+                          "right": {
+                            "op": "ref",
+                            "name": "vmajor"
+                          }
+                        },
+                        "then": {
+                          "op": "range",
+                          "start": {
+                            "op": "const",
+                            "name": "umd_max_minor"
+                          },
+                          "stop": {
+                            "op": "literal",
+                            "value": -1
+                          },
+                          "step": {
+                            "op": "literal",
+                            "value": -1
+                          }
+                        },
+                        "else": {
+                          "op": "range",
+                          "start": {
+                            "op": "ref",
+                            "name": "vminor"
+                          },
+                          "stop": {
+                            "op": "literal",
+                            "value": -1
+                          },
+                          "step": {
+                            "op": "literal",
+                            "value": -1
+                          }
+                        }
+                      },
+                      {
+                        "op": "list",
+                        "items": [
+                          {
+                            "op": "literal",
+                            "value": null
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "var": "minor",
+                  "body": {
+                    "op": "if",
+                    "condition": {
+                      "op": "is_null",
+                      "value": {
+                        "op": "ref",
+                        "name": "minor"
+                      }
+                    },
+                    "then": {
+                      "op": "format",
+                      "template": "{major}",
+                      "args": {
+                        "major": {
+                          "op": "ref",
+                          "name": "major"
+                        }
+                      }
+                    },
+                    "else": {
+                      "op": "format",
+                      "template": "{major}.{minor}",
+                      "args": {
+                        "major": {
+                          "op": "ref",
+                          "name": "major"
+                        },
+                        "minor": {
+                          "op": "ref",
+                          "name": "minor"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "upper": {
+      "cache": false,
+      "expr": {
+        "op": "let",
+        "bindings": [
+          {
+            "name": "version",
+            "value": {
+              "op": "query",
+              "name": "umd_version"
+            }
+          }
+        ],
+        "body": {
+          "op": "if",
+          "condition": {
+            "op": "is_null",
+            "value": {
+              "op": "ref",
+              "name": "version"
+            }
+          },
+          "then": {
+            "op": "literal",
+            "value": []
+          },
+          "else": {
+            "op": "let",
+            "bindings": [
+              {
+                "name": "vmajor",
+                "value": {
+                  "op": "version_part",
+                  "value": {
+                    "op": "ref",
+                    "name": "version"
+                  },
+                  "part": "major"
+                }
+              },
+              {
+                "name": "vminor",
+                "value": {
+                  "op": "version_part",
+                  "value": {
+                    "op": "ref",
+                    "name": "version"
+                  },
+                  "part": "minor"
+                }
+              }
+            ],
+            "body": {
+              "op": "flatten",
+              "value": {
+                "op": "map",
+                "items": {
+                  "op": "range",
+                  "start": {
+                    "op": "const",
+                    "name": "umd_max_major"
+                  },
+                  "stop": {
+                    "op": "binary",
+                    "kind": "sub",
+                    "left": {
+                      "op": "ref",
+                      "name": "vmajor"
+                    },
+                    "right": {
+                      "op": "literal",
+                      "value": 1
+                    }
+                  },
+                  "step": {
+                    "op": "literal",
+                    "value": -1
+                  }
+                },
+                "var": "major",
+                "body": {
+                  "op": "map",
+                  "items": {
+                    "op": "if",
+                    "condition": {
+                      "op": "binary",
+                      "kind": "gt",
+                      "left": {
+                        "op": "ref",
+                        "name": "major"
+                      },
+                      "right": {
+                        "op": "ref",
+                        "name": "vmajor"
+                      }
+                    },
+                    "then": {
+                      "op": "concat",
+                      "items": [
+                        {
+                          "op": "range",
+                          "start": {
+                            "op": "const",
+                            "name": "umd_max_minor"
+                          },
+                          "stop": {
+                            "op": "literal",
+                            "value": -1
+                          },
+                          "step": {
+                            "op": "literal",
+                            "value": -1
+                          }
+                        },
+                        {
+                          "op": "list",
+                          "items": [
+                            {
+                              "op": "literal",
+                              "value": null
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "else": {
+                      "op": "range",
+                      "start": {
+                        "op": "const",
+                        "name": "umd_max_minor"
+                      },
+                      "stop": {
+                        "op": "ref",
+                        "name": "vminor"
+                      },
+                      "step": {
+                        "op": "literal",
+                        "value": -1
+                      }
+                    }
+                  },
+                  "var": "minor",
+                  "body": {
+                    "op": "if",
+                    "condition": {
+                      "op": "is_null",
+                      "value": {
+                        "op": "ref",
+                        "name": "minor"
+                      }
+                    },
+                    "then": {
+                      "op": "format",
+                      "template": "{major}",
+                      "args": {
+                        "major": {
+                          "op": "ref",
+                          "name": "major"
+                        }
+                      }
+                    },
+                    "else": {
+                      "op": "format",
+                      "template": "{major}.{minor}",
+                      "args": {
+                        "major": {
+                          "op": "ref",
+                          "name": "major"
+                        },
+                        "minor": {
+                          "op": "ref",
+                          "name": "minor"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "supported_sm": {
+      "cache": false,
+      "expr": {
+        "op": "let",
+        "bindings": [
+          {
+            "name": "architecture",
+            "value": {
+              "op": "query",
+              "name": "sm_architectures"
+            }
+          }
+        ],
+        "body": {
+          "op": "if",
+          "condition": {
+            "op": "ref",
+            "name": "architecture"
+          },
+          "then": {
+            "op": "let",
+            "bindings": [
+              {
+                "name": "parts",
+                "value": {
+                  "op": "unpack",
+                  "value": {
+                    "op": "ref",
+                    "name": "architecture"
+                  },
+                  "count": 2
+                }
+              },
+              {
+                "name": "major",
+                "value": {
+                  "op": "index",
+                  "value": {
+                    "op": "ref",
+                    "name": "parts"
+                  },
+                  "index": {
+                    "op": "literal",
+                    "value": 0
+                  }
+                }
+              },
+              {
+                "name": "minor",
+                "value": {
+                  "op": "index",
+                  "value": {
+                    "op": "ref",
+                    "name": "parts"
+                  },
+                  "index": {
+                    "op": "literal",
+                    "value": 1
+                  }
+                }
+              }
+            ],
+            "body": {
+              "op": "if",
+              "condition": {
+                "op": "binary",
+                "kind": "lt",
+                "left": {
+                  "op": "parse_version",
+                  "value": {
+                    "op": "format",
+                    "template": "{major}.{minor}",
+                    "args": {
+                      "major": {
+                        "op": "ref",
+                        "name": "major"
+                      },
+                      "minor": {
+                        "op": "ref",
+                        "name": "minor"
+                      }
+                    }
+                  }
+                },
+                "right": {
+                  "op": "parse_version",
+                  "value": {
+                    "op": "format",
+                    "template": "{major}.0",
+                    "args": {
+                      "major": {
+                        "op": "const",
+                        "name": "sm_min_major"
+                      }
+                    }
+                  }
+                }
+              },
+              "then": {
+                "op": "seq",
+                "items": [
+                  {
+                    "op": "warn",
+                    "diagnostic": "old_sm",
+                    "args": {
+                      "major": {
+                        "op": "ref",
+                        "name": "major"
+                      },
+                      "minor": {
+                        "op": "ref",
+                        "name": "minor"
+                      }
+                    }
+                  },
+                  {
+                    "op": "literal",
+                    "value": []
+                  }
+                ]
+              },
+              "else": {
+                "op": "concat",
+                "items": [
+                  {
+                    "op": "map",
+                    "items": {
+                      "op": "range",
+                      "start": {
+                        "op": "ref",
+                        "name": "minor"
+                      },
+                      "stop": {
+                        "op": "literal",
+                        "value": -1
+                      },
+                      "step": {
+                        "op": "literal",
+                        "value": -1
+                      }
+                    },
+                    "var": "minor_digit",
+                    "body": {
+                      "op": "format",
+                      "template": "{major}{minor}_real",
+                      "args": {
+                        "major": {
+                          "op": "ref",
+                          "name": "major"
+                        },
+                        "minor": {
+                          "op": "ref",
+                          "name": "minor_digit"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "op": "list",
+                    "items": [
+                      {
+                        "op": "format",
+                        "template": "{major}0_virtual",
+                        "args": {
+                          "major": {
+                            "op": "ref",
+                            "name": "major"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "else": {
+            "op": "literal",
+            "value": []
+          }
+        }
+      }
+    },
+    "supported_configs": {
+      "cache": true,
+      "expr": {
+        "op": "if",
+        "condition": {
+          "op": "is_null",
+          "value": {
+            "op": "query",
+            "name": "umd_version"
+          }
+        },
+        "then": {
+          "op": "literal",
+          "value": []
+        },
+        "else": {
+          "op": "configs",
+          "mode": "supported"
+        }
+      }
+    },
+    "all_configs": {
+      "cache": true,
+      "expr": {
+        "op": "configs",
+        "mode": "all"
+      }
+    }
+  },
+  "features": [
+    {
+      "name": "cuda_version_lower_bound",
+      "multi_value": false,
+      "all": "all_umd",
+      "supported": "lower"
+    },
+    {
+      "name": "cuda_version_upper_bound",
+      "multi_value": false,
+      "all": "all_umd",
+      "supported": "upper"
+    },
+    {
+      "name": "sm_arch",
+      "multi_value": true,
+      "all": "all_sm",
+      "supported": "supported_sm"
+    }
+  ],
+  "exports": {
+    "generate_all_umd_values": "all_umd",
+    "generate_all_sm_values": "all_sm",
+    "umd_version": "umd_version",
+    "get_sm_architectures": "sm_architectures",
+    "get_supported_configs": "supported_configs",
+    "get_all_configs": "all_configs"
+  },
+  "diagnostics": {
+    "missing_umd": {
+      "category": "UserWarning",
+      "message": "No UMD version found. NVIDIA platform is not supported or properly installed on this machine."
+    },
+    "outside_umd": {
+      "category": "UserWarning",
+      "message": "The UMD version `{version}` is outside the supported range: `>={minimum},<={maximum}`.\nNVIDIA platform detection has been deactivated."
+    },
+    "old_sm": {
+      "category": "UserWarning",
+      "message": "The SM version is lower than the lowest SM architecture supported by the NVIDIA Variant Plugin: {major}.{minor}. NVIDIA platform detection may not work as expected."
+    }
+  }
+}

@@ -1,0 +1,200 @@
+{
+  "$schema": "urn:variant-provider:schema:definition:1.0.0",
+  "format_version": "1.0.0",
+  "data_version": 1,
+  "provider": {
+    "id": "native_example",
+    "namespace": "native_example",
+    "is_build_plugin": false
+  },
+  "constants": {
+    "values": [
+      "fast",
+      "portable"
+    ]
+  },
+  "libraries": {
+    "probe": {
+      "platforms": {
+        "default": [
+          {
+            "path": "libvariant-test-probe.so"
+          }
+        ],
+        "windows": [
+          {
+            "path": "variant-test-probe.dll"
+          }
+        ]
+      }
+    }
+  },
+  "functions": {
+    "open": {
+      "library": "probe",
+      "symbol": "probe_open",
+      "abi": "C",
+      "args": [
+        {
+          "name": "handle",
+          "type": "handle",
+          "direction": "out"
+        }
+      ],
+      "returns": "u32",
+      "success": [
+        0
+      ]
+    },
+    "read": {
+      "library": "probe",
+      "symbol": "probe_read",
+      "abi": "C",
+      "args": [
+        {
+          "name": "handle",
+          "type": "handle",
+          "direction": "in"
+        },
+        {
+          "name": "input",
+          "type": "i64",
+          "direction": "in"
+        },
+        {
+          "name": "value",
+          "type": "i64",
+          "direction": "out"
+        }
+      ],
+      "returns": "u32",
+      "success": [
+        0
+      ]
+    },
+    "close": {
+      "library": "probe",
+      "symbol": "probe_close",
+      "abi": "C",
+      "args": [],
+      "returns": "u32",
+      "success": [
+        0
+      ],
+      "invalidates_handles": true
+    }
+  },
+  "queries": {
+    "all": {
+      "cache": true,
+      "expr": {
+        "op": "const",
+        "name": "values"
+      }
+    },
+    "supported": {
+      "cache": true,
+      "expr": {
+        "op": "if",
+        "condition": {
+          "op": "env",
+          "name": "EXAMPLE_FAST",
+          "default": null
+        },
+        "then": {
+          "op": "const",
+          "name": "values"
+        },
+        "else": {
+          "op": "literal",
+          "value": [
+            "portable"
+          ]
+        }
+      }
+    },
+    "all_configs": {
+      "cache": true,
+      "expr": {
+        "op": "configs",
+        "mode": "all"
+      }
+    },
+    "supported_configs": {
+      "cache": true,
+      "expr": {
+        "op": "configs",
+        "mode": "supported"
+      }
+    },
+    "native": {
+      "cache": true,
+      "expr": {
+        "op": "finally",
+        "body": {
+          "op": "let",
+          "bindings": [
+            {
+              "name": "handle",
+              "value": {
+                "op": "get",
+                "value": {
+                  "op": "call",
+                  "function": "open",
+                  "args": []
+                },
+                "key": "handle"
+              }
+            }
+          ],
+          "body": {
+            "op": "list",
+            "items": [
+              {
+                "op": "format",
+                "template": "tier_{value}",
+                "args": {
+                  "value": {
+                    "op": "get",
+                    "value": {
+                      "op": "call",
+                      "function": "read",
+                      "args": [
+                        {
+                          "op": "ref",
+                          "name": "handle"
+                        },
+                        {
+                          "op": "literal",
+                          "value": 5000000000
+                        }
+                      ]
+                    },
+                    "key": "value"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "cleanup": {
+          "op": "call",
+          "function": "close",
+          "args": []
+        }
+      }
+    }
+  },
+  "features": [
+    {
+      "name": "capability_tier",
+      "multi_value": false,
+      "all": "native",
+      "supported": "native"
+    }
+  ],
+  "exports": {
+    "get_supported_configs": "supported_configs"
+  },
+  "diagnostics": {}
+}

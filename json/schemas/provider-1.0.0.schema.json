@@ -1,0 +1,1337 @@
+{
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "const": "urn:variant-provider:schema:definition:1.0.0"
+    },
+    "format_version": {
+      "const": "1.0.0"
+    },
+    "data_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "provider": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "is_build_plugin": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "namespace",
+        "is_build_plugin"
+      ],
+      "additionalProperties": false
+    },
+    "constants": {
+      "type": "object",
+      "additionalProperties": {}
+    },
+    "libraries": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "platforms": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "path"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "env": {
+                        "type": "string"
+                      },
+                      "default": {
+                        "type": "string"
+                      },
+                      "suffix": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "env",
+                      "default",
+                      "suffix"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "required": [
+          "platforms"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "functions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "library": {
+            "type": "string"
+          },
+          "symbol": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "abi": {
+            "const": "C"
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "type": {
+                  "enum": [
+                    "i32",
+                    "u32",
+                    "i64",
+                    "u64",
+                    "handle",
+                    "buffer"
+                  ]
+                },
+                "direction": {
+                  "enum": [
+                    "in",
+                    "out"
+                  ]
+                },
+                "size": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 1048576
+                }
+              },
+              "required": [
+                "name",
+                "type",
+                "direction"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "returns": {
+            "enum": [
+              "i32",
+              "u32",
+              "i64",
+              "u64",
+              "void"
+            ]
+          },
+          "success": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "invalidates_handles": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "library",
+          "symbol",
+          "abi",
+          "args",
+          "returns",
+          "success"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "queries": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "cache": {
+            "type": "boolean"
+          },
+          "expr": {
+            "$ref": "#/$defs/expr"
+          }
+        },
+        "required": [
+          "cache",
+          "expr"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$"
+          },
+          "multi_value": {
+            "type": "boolean"
+          },
+          "all": {
+            "type": "string"
+          },
+          "supported": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "multi_value",
+          "all",
+          "supported"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "exports": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "diagnostics": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "category",
+          "message"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "$schema",
+    "format_version",
+    "data_version",
+    "provider",
+    "constants",
+    "libraries",
+    "functions",
+    "queries",
+    "features",
+    "exports",
+    "diagnostics"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:variant-provider:schema:definition:1.0.0",
+  "title": "Variant Provider Definition 1.0.0",
+  "$defs": {
+    "expr": {
+      "type": "object",
+      "required": [
+        "op"
+      ],
+      "properties": {
+        "op": {
+          "enum": [
+            "literal",
+            "ref",
+            "const",
+            "query",
+            "env",
+            "let",
+            "if",
+            "list",
+            "seq",
+            "concat",
+            "record",
+            "get",
+            "index",
+            "binary",
+            "not",
+            "is_null",
+            "flatten",
+            "unique",
+            "parse_int",
+            "parse_version",
+            "range",
+            "map",
+            "filter",
+            "sort",
+            "split",
+            "version_part",
+            "format",
+            "call",
+            "try",
+            "finally",
+            "warn",
+            "raise",
+            "unpack",
+            "configs"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "literal"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "literal"
+              },
+              "value": {}
+            },
+            "required": [
+              "op",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "ref"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "ref"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "op",
+              "name"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "const"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "const"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "op",
+              "name"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "query"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "query"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "op",
+              "name"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "env"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "env"
+              },
+              "name": {
+                "type": "string"
+              },
+              "default": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "name",
+              "default"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "let"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "let"
+              },
+              "bindings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "$ref": "#/$defs/expr"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "body": {
+                "$ref": "#/$defs/expr"
+              }
+            },
+            "required": [
+              "op",
+              "bindings",
+              "body"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "if"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "if"
+              },
+              "condition": {
+                "$ref": "#/$defs/expr"
+              },
+              "then": {
+                "$ref": "#/$defs/expr"
+              },
+              "else": {
+                "$ref": "#/$defs/expr"
+              }
+            },
+            "required": [
+              "op",
+              "condition",
+              "then",
+              "else"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "list"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "list"
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/expr"
+                }
+              }
+            },
+            "required": [
+              "op",
+              "items"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "seq"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "seq"
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/expr"
+                }
+              }
+            },
+            "required": [
+              "op",
+              "items"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "concat"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "concat"
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/expr"
+                }
+              }
+            },
+            "required": [
+              "op",
+              "items"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "record"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "record"
+              },
+              "fields": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/$defs/expr"
+                }
+              }
+            },
+            "required": [
+              "op",
+              "fields"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "get"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "get"
+              },
+              "value": {
+                "$ref": "#/$defs/expr"
+              },
+              "key": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "op",
+              "value",
+              "key"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "index"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "index"
+              },
+              "value": {
+                "$ref": "#/$defs/expr"
+              },
+              "index": {
+                "$ref": "#/$defs/expr"
+              }
+            },
+            "required": [
+              "op",
+              "value",
+              "index"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "binary"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "binary"
+              },
+              "kind": {
+                "enum": [
+                  "add",
+                  "sub",
+                  "mul",
+                  "floor_div",
+                  "mod",
+                  "eq",
+                  "ne",
+                  "lt",
+                  "le",
+                  "gt",
+                  "ge"
+                ]
+              },
+              "left": {
+                "$ref": "#/$defs/expr"
+              },
+              "right": {
+                "$ref": "#/$defs/expr"
+              }
+            },
+            "required": [
+              "op",
+              "kind",
+              "left",
+              "right"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "not"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "not"
+              },
+              "value": {
+                "$ref": "#/$defs/expr"
+              }
+            },
+            "required": [
+              "op",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "is_null"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "is_null"
+              },
+              "value": {
+                "$ref": "#/$defs/expr"
+              }
+            },
+            "required": [
+              "op",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "flatten"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "flatten"
+              },
+              "value": {
+                "$ref": "#/$defs/expr"
+              }
+            },
+            "required": [
+              "op",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "unique"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "unique"
+              },
+              "value": {
+                "$ref": "#/$defs/expr"
+              }
+            },
+            "required": [
+              "op",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "parse_int"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "parse_int"
+              },
+              "value": {
+                "$ref": "#/$defs/expr"
+              }
+            },
+            "required": [
+              "op",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "parse_version"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "parse_version"
+              },
+              "value": {
+                "$ref": "#/$defs/expr"
+              }
+            },
+            "required": [
+              "op",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "range"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "range"
+              },
+              "start": {
+                "$ref": "#/$defs/expr"
+              },
+              "stop": {
+                "$ref": "#/$defs/expr"
+              },
+              "step": {
+                "$ref": "#/$defs/expr"
+              }
+            },
+            "required": [
+              "op",
+              "start",
+              "stop",
+              "step"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "map"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "map"
+              },
+              "items": {
+                "$ref": "#/$defs/expr"
+              },
+              "var": {
+                "type": "string"
+              },
+              "body": {
+                "$ref": "#/$defs/expr"
+              }
+            },
+            "required": [
+              "op",
+              "items",
+              "var",
+              "body"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "filter"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "filter"
+              },
+              "items": {
+                "$ref": "#/$defs/expr"
+              },
+              "var": {
+                "type": "string"
+              },
+              "body": {
+                "$ref": "#/$defs/expr"
+              }
+            },
+            "required": [
+              "op",
+              "items",
+              "var",
+              "body"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "sort"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "sort"
+              },
+              "value": {
+                "$ref": "#/$defs/expr"
+              },
+              "reverse": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "op",
+              "value",
+              "reverse"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "split"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "split"
+              },
+              "value": {
+                "$ref": "#/$defs/expr"
+              },
+              "separator": {
+                "type": "string",
+                "minLength": 1
+              },
+              "maxsplit": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "op",
+              "value",
+              "separator",
+              "maxsplit"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "version_part"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "version_part"
+              },
+              "value": {
+                "$ref": "#/$defs/expr"
+              },
+              "part": {
+                "enum": [
+                  "major",
+                  "minor",
+                  "micro"
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "value",
+              "part"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "format"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "format"
+              },
+              "template": {
+                "type": "string"
+              },
+              "args": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/$defs/expr"
+                }
+              }
+            },
+            "required": [
+              "op",
+              "template",
+              "args"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "call"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "call"
+              },
+              "function": {
+                "type": "string"
+              },
+              "args": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/expr"
+                }
+              }
+            },
+            "required": [
+              "op",
+              "function",
+              "args"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "try"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "try"
+              },
+              "body": {
+                "$ref": "#/$defs/expr"
+              },
+              "catch": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "fallback": {
+                "$ref": "#/$defs/expr"
+              }
+            },
+            "required": [
+              "op",
+              "body",
+              "catch",
+              "fallback"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "finally"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "finally"
+              },
+              "body": {
+                "$ref": "#/$defs/expr"
+              },
+              "cleanup": {
+                "$ref": "#/$defs/expr"
+              }
+            },
+            "required": [
+              "op",
+              "body",
+              "cleanup"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "warn"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "warn"
+              },
+              "diagnostic": {
+                "type": "string"
+              },
+              "args": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/$defs/expr"
+                }
+              }
+            },
+            "required": [
+              "op",
+              "diagnostic",
+              "args"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "raise"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "raise"
+              },
+              "diagnostic": {
+                "type": "string"
+              },
+              "args": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/$defs/expr"
+                }
+              }
+            },
+            "required": [
+              "op",
+              "diagnostic",
+              "args"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "unpack"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "unpack"
+              },
+              "value": {
+                "$ref": "#/$defs/expr"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100000
+              }
+            },
+            "required": [
+              "op",
+              "value",
+              "count"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "configs"
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "configs"
+              },
+              "mode": {
+                "enum": [
+                  "all",
+                  "supported"
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "mode"
+            ],
+            "additionalProperties": false
+          }
+        }
+      ]
+    }
+  }
+}

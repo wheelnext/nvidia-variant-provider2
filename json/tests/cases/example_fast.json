@@ -1,0 +1,27 @@
+{
+  "format_version": "1.0.0",
+  "id": "example_fast",
+  "definition": "tests/definitions/example.json",
+  "environment": {
+    "EXAMPLE_FAST": "1"
+  },
+  "calls": [],
+  "steps": [
+    {
+      "method": "get_supported_configs",
+      "expected": {
+        "value": [
+          {
+            "name": "mode",
+            "values": [
+              "fast",
+              "portable"
+            ],
+            "multi_value": false
+          }
+        ],
+        "warnings": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "format_version": "1.0.0",
+  "id": "example_portable",
+  "definition": "tests/definitions/example.json",
+  "environment": {},
+  "calls": [],
+  "steps": [
+    {
+      "method": "get_supported_configs",
+      "expected": {
+        "value": [
+          {
+            "name": "mode",
+            "values": [
+              "portable"
+            ],
+            "multi_value": false
+          }
+        ],
+        "warnings": []
+      }
+    }
+  ]
+}

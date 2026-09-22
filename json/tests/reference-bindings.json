@@ -1,0 +1,15 @@
+{
+  "module": "nvidia_variant_provider.pynvml",
+  "provider": "nvidia_variant_provider.plugin:NvidiaVariantPlugin",
+  "environment": "nvidia_variant_provider.detect_cuda:CudaEnvironment",
+  "bindings": [
+    {"attribute": "nvmlInit", "function": "init", "inputs": [], "implicit": [0], "outputs": []},
+    {"attribute": "nvmlShutdown", "function": "shutdown", "inputs": [], "implicit": [], "outputs": []},
+    {"attribute": "nvmlSystemGetDriverVersion", "function": "system_version", "inputs": [], "implicit": [80], "outputs": ["value"]},
+    {"attribute": "nvmlSystemGetCudaDriverVersion_v2", "function": "driver_v2", "inputs": [], "implicit": [], "outputs": ["value"]},
+    {"attribute": "nvmlSystemGetCudaDriverVersion", "function": "driver_v1", "inputs": [], "implicit": [], "outputs": ["value"]},
+    {"attribute": "nvmlDeviceGetCount", "function": "count", "inputs": [], "implicit": [], "outputs": ["value"]},
+    {"attribute": "nvmlDeviceGetHandleByIndex", "function": "handle", "inputs": ["index"], "implicit": [], "outputs": ["value"], "handle_output": true},
+    {"attribute": "nvmlDeviceGetCudaComputeCapability", "function": "capability", "inputs": ["handle"], "implicit": [], "outputs": ["major", "minor"], "handle_input": true}
+  ]
+}
