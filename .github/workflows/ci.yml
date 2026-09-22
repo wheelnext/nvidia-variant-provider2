@@ -14,6 +14,12 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust -> target
+          # Prek builds Rust hook tools in its own isolated environments.
+          cache-directories: ~/.cache/prek
+          key: ${{ github.job }}
       - name: Install workspace dependencies
         run: uv sync --frozen
       - name: Run prek
@@ -37,6 +43,11 @@ jobs:
         if: matrix.language == 'rust'
       - uses: ilammy/msvc-dev-cmd@v1
         if: runner.os == 'Windows'
+      - uses: Swatinem/rust-cache@v2
+        if: matrix.language == 'rust'
+        with:
+          workspaces: rust -> target
+          key: ${{ github.job }}
       - name: Install workspace dependencies
         run: uv sync --frozen
       - name: Python tests
@@ -59,6 +70,10 @@ jobs:
         with:
           python-version: '3.14'
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust -> target
+          key: ${{ github.job }}
       - name: Install workspace dependencies
         run: uv sync --frozen
       - name: Build Python packages
