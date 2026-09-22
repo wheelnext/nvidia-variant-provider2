@@ -139,6 +139,15 @@ def signed(definition):
     return payload, envelope, trust
 
 
+def test_bundled_signature_matches_definition_bytes():
+    root = ROOT / "json"
+    trust = strict_json((root / "signatures/development-trust.json").read_bytes())
+    payload = verify_envelope(
+        (root / "signatures/nvidia.dsse.json").read_bytes(), trust
+    )
+    assert payload == (root / "nvidia.json").read_bytes()
+
+
 def test_signature_roundtrip_and_scope(definition):
     payload, envelope, trust = signed(definition)
     assert verify_envelope(json.dumps(envelope).encode(), trust) == payload

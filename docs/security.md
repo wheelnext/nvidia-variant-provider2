@@ -36,6 +36,10 @@ re-signing. No JSON canonicalization is performed. `keyid` is only an optional
 hint; it never authorizes a key. See the
 [DSSE protocol](https://github.com/secure-systems-lab/dsse/blob/master/protocol.md).
 
+`.gitattributes` pins JSON files to LF line endings so Windows checkouts
+preserve the signed payload and resource digests. Verification compares exact
+bytes on every platform; it does not normalize line endings.
+
 ## Local demonstration
 
 This checkout includes `json/signatures/nvidia.dsse.json` and a development-only

@@ -1,0 +1,2 @@
+# Signatures and resource digests cover exact bytes on every platform.
+*.json text eol=lf
